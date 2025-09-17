@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Mezcla para Construcción</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -29,6 +31,44 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            border: 1px solid #4b5563;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Estilo para el marcador del acordeón */
+        summary::-webkit-details-marker {
+            display: none;
+        }
+        summary::after {
+            content: ' ▼';
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
@@ -42,93 +82,88 @@
 
         <form id="main-calculator" class="space-y-6">
             
-            <!-- Paso 1: Dimensiones del área a rellenar -->
+            <!-- Paso 1: Tipo de Mezcla -->
             <div class="step-card border border-gray-700 p-6 rounded-lg">
-                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>Paso 1: Define el área a rellenar</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="numHuecos" class="block text-sm font-medium text-gray-300 mb-1">Nº de Huecos</label>
-                        <input type="number" id="numHuecos" value="6" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="alturaHueco" class="block text-sm font-medium text-gray-300 mb-1">Altura Hueco (cm)</label>
-                        <input type="number" id="alturaHueco" value="2" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="largoHueco" class="block text-sm font-medium text-gray-300 mb-1">Largo Hueco (m)</label>
-                        <input type="number" id="largoHueco" value="8" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="anchoHueco" class="block text-sm font-medium text-gray-300 mb-1">Ancho Hueco (m)</label>
-                        <input type="number" id="anchoHueco" value="2" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Paso 2: Dimensiones del cajón -->
-            <div class="step-card border border-gray-700 p-6 rounded-lg">
-                 <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4" /></svg>Paso 2: Define tu cajón de mezcla</h2>
-                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                       <label for="largo" class="block text-sm font-medium text-gray-300 mb-1">Largo Cajón (m)</label>
-                       <input type="number" id="largo" step="0.01" value="1.5" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                       <label for="ancho" class="block text-sm font-medium text-gray-300 mb-1">Ancho Cajón (m)</label>
-                       <input type="number" id="ancho" step="0.01" value="0.3" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                       <label for="altura" class="block text-sm font-medium text-gray-300 mb-1">Altura Cajón (m)</label>
-                       <input type="number" id="altura" step="0.01" value="0.2" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Paso 3: Define la Proporción -->
-            <div class="step-card border border-gray-700 p-6 rounded-lg">
-                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>Paso 3: Define tu mezcla</h2>
+                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>Paso 1: Elige el tipo de mezcla</h2>
                 <div>
-                    <label for="proporcion" class="block text-sm font-medium text-gray-300 mb-1">Proporción (Cemento:Arena)</label>
-                    <select id="proporcion" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                        <option value="4" selected>1 : 3</option>
-                        <option value="5">1 : 4</option>
-                        <option value="6">1 : 5</option>
+                    <select id="tipoMezcla" name="tipoMezcla" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
+                        <option value="mortero" selected>Mortero (Cemento + Arena)</option>
+                        <option value="hormigon">Hormigón (Cemento + Arena + Grava)</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Paso 4: Costes -->
+            <!-- Paso 2: Area a rellenar -->
             <div class="step-card border border-gray-700 p-6 rounded-lg">
-                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>Paso 4: Define los Costes (Opcional)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="precioSaco" class="block text-sm font-medium text-gray-300 mb-1">Precio por Saco Cemento (€)</label>
-                        <input type="number" id="precioSaco" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="precioCarretilla" class="block text-sm font-medium text-gray-300 mb-1">Precio por Carretilla Arena (€)</label>
-                        <input type="number" id="precioCarretilla" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
+                 <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>Paso 2: Define el área a rellenar</h2>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="number" id="numHuecos" name="numHuecos" value="6" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Nº de Huecos">
+                    <input type="number" id="alturaHueco" name="alturaHueco" value="2" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Altura (cm)">
+                    <input type="number" id="largoHueco" name="largoHueco" value="8" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Largo (m)">
+                    <input type="number" id="anchoHueco" name="anchoHueco" value="2" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Ancho (m)">
                 </div>
             </div>
             
-            <!-- Paso 5: Tiempos -->
+            <!-- Paso 3: Cajon -->
             <div class="step-card border border-gray-700 p-6 rounded-lg">
-                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Paso 5: Estimar Tiempos (Opcional)</h2>
+                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7l8 4" /></svg>Paso 3: Define tu cajón de mezcla</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="tiempoCarretilla" class="block text-sm font-medium text-gray-300 mb-1">Min. por Carretilla</label>
-                        <input type="number" id="tiempoCarretilla" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="tiempoMezcla" class="block text-sm font-medium text-gray-300 mb-1">Min. por Cajón</label>
-                        <input type="number" id="tiempoMezcla" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-                    <div>
-                        <label for="tiempoAlisado" class="block text-sm font-medium text-gray-300 mb-1">Min. por m² (Alisado)</label>
-                        <input type="number" id="tiempoAlisado" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
+                    <input type="number" id="largo" name="largo" step="0.01" value="1.5" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Largo (m)">
+                    <input type="number" id="ancho" name="ancho" step="0.01" value="0.3" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Ancho (m)">
+                    <input type="number" id="altura" name="altura" step="0.01" value="0.2" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Altura (m)">
                 </div>
+            </div>
+
+            <!-- Paso 4: Proporcion -->
+            <div class="step-card border border-gray-700 p-6 rounded-lg">
+                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>Paso 4: Define la proporción</h2>
+                <div>
+                    <label for="proporcion" class="block text-sm font-medium text-gray-300 mb-1" id="proporcionLabel">Proporción (Cemento:Arena)</label>
+                    <select id="proporcion" name="proporcion" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500"></select>
+                </div>
+            </div>
+
+            <!-- Paso 5: Desperdicio -->
+            <div class="step-card border border-gray-700 p-6 rounded-lg">
+                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>Paso 5: Calcula el desperdicio (Opcional)</h2>
+                <div>
+                    <label for="desperdicio" class="block text-sm font-medium text-gray-300 mb-1">Porcentaje de Desperdicio (%) 
+                        <span class="tooltip text-gray-400">
+                            (?)
+                            <span class="tooltiptext">Añade un extra para compensar pérdidas de material. Un 5-10% es habitual.</span>
+                        </span>
+                    </label>
+                    <input type="number" id="desperdicio" name="desperdicio" value="10" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <!-- Paso 6: Costes y Tiempos -->
+            <div class="step-card border border-gray-700 p-6 rounded-lg">
+                <h2 class="text-xl font-bold text-red-400 mb-4 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>Paso 6: Costes y Tiempos (Opcional)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="number" id="precioSaco" name="precioSaco" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Precio Saco Cemento (€)">
+                    <input type="number" id="precioCarretilla" name="precioCarretilla" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Precio Carretilla Arena (€)">
+                    <input type="number" id="precioGrava" name="precioGrava" step="0.01" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500 hidden" placeholder="Precio Carretilla Grava (€)">
+                    <input type="number" id="tiempoCarretilla" name="tiempoCarretilla" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Min. por Carretilla">
+                    <input type="number" id="tiempoMezcla" name="tiempoMezcla" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Min. por Cajón">
+                    <input type="number" id="tiempoAlisado" name="tiempoAlisado" step="0.1" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Min. por m² (Alisado)">
+                </div>
+            </div>
+
+             <!-- Paso 7: Pronóstico del Tiempo -->
+            <div class="step-card border border-gray-700 p-6 rounded-lg">
+                <details>
+                    <summary class="text-xl font-bold text-red-400 cursor-pointer flex items-center list-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                        Paso 7: Consultar Pronóstico del Tiempo (Opcional)
+                    </summary>
+                    <div class="mt-4 space-y-4">
+                        <input type="text" id="weatherAddress" name="weatherAddress" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Introduce una dirección (ej: Madrid, España)">
+                        <input type="date" id="weatherDate" name="weatherDate" class="w-full p-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-red-500">
+                        <button type="button" id="getWeatherBtn" class="w-full bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700">Consultar Pronóstico</button>
+                        <div id="weather-result" class="text-center text-gray-300 mt-2 p-2 bg-gray-600 rounded-lg hidden"></div>
+                    </div>
+                </details>
             </div>
 
             <button type="submit" class="w-full bg-red-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition transform hover:scale-105">
@@ -139,192 +174,360 @@
         <!-- Sección de Resultados -->
         <div id="results-container" class="mt-10 pt-8 border-t-2 border-dashed border-gray-600 hidden">
              <h2 class="text-2xl font-bold text-center text-gray-100 mb-6">Resumen del Proyecto</h2>
-             <div class="space-y-6">
-                
-                <!-- Resumen General -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Resumen General</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                        <div>
-                            <p class="text-sm font-medium text-red-300">Volumen Total a Cubrir</p>
-                            <p id="volumenTotalCubrir" class="text-3xl font-bold text-red-400"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-red-300">Nº de Cajones a Preparar</p>
-                            <p id="totalCajones" class="text-3xl font-bold text-red-400"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Detalles por Cajon -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Detalles por Cajón de Mezcla</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-                        <div>
-                            <p class="text-sm font-medium text-red-300">Volumen de Mezcla</p>
-                            <p id="litrosPorCajon" class="text-3xl font-bold text-red-400"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-red-300">Agua Necesaria (Aprox.)</p>
-                            <p id="aguaPorCajon" class="text-3xl font-bold text-red-400"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Visualización Proporción -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Proporción de la Mezcla</h3>
-                    <div class="flex w-full h-8 rounded-lg overflow-hidden">
-                        <div id="cemento-bar" class="bg-gray-400 flex items-center justify-center text-sm font-bold text-gray-800" title="Cemento">1</div>
-                        <div id="arena-bar" class="bg-yellow-600 flex items-center justify-center text-sm font-bold text-gray-800" title="Arena">3</div>
-                    </div>
-                </div>
-
-                 <!-- Resumen de Materiales Totales -->
-                <div class="bg-gray-700 p-6 rounded-lg">
-                    <h3 class="font-semibold text-lg text-center text-gray-100 mb-4">Materiales Totales para el Trabajo</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                        <div>
-                            <span id="sacosCemento" class="text-4xl font-bold text-red-400"></span>
-                            <p class="text-md text-red-300">Sacos de Cemento</p>
-                        </div>
-                        <div>
-                            <span id="carretillasArena" class="text-4xl font-bold text-red-400"></span>
-                            <p class="text-md text-red-300">Carretillas de Arena</p>
-                        </div>
-                         <div>
-                            <span id="litrosAgua" class="text-4xl font-bold text-red-400"></span>
-                            <p class="text-md text-red-300">Litros de Agua (Aprox.)</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Coste Total -->
-                <div id="coste-container" class="bg-green-900/50 border border-green-500 p-4 rounded-lg hidden">
-                     <h3 class="font-semibold text-lg text-center text-green-200 mb-2">Coste Total Estimado</h3>
-                     <p id="costeTotal" class="text-4xl font-bold text-green-300 text-center"></p>
-                </div>
-                
-                <!-- Tiempo Total -->
-                <div id="tiempo-container" class="bg-blue-900/50 border border-blue-500 p-4 rounded-lg hidden">
-                     <h3 class="font-semibold text-lg text-center text-blue-200 mb-2">Tiempo Total Estimado</h3>
-                     <p id="tiempoTotal" class="text-4xl font-bold text-blue-300 text-center"></p>
-                </div>
-
-
-                <div id="error-message" class="text-center text-red-400 font-medium hidden mt-4"></div>
+             <div class="space-y-6" id="report-content">
+                <!-- El contenido del informe se genera dinámicamente aquí -->
              </div>
+             <div id="error-message" class="text-center text-red-400 font-medium hidden mt-4"></div>
+             <button id="generate-pdf" class="w-full mt-6 bg-gray-600 text-white py-3 rounded-lg font-semibold text-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+                Generar Informe PDF
+             </button>
         </div>
-
     </div>
 
     <script>
-        document.getElementById('main-calculator').addEventListener('submit', function(event) {
-            event.preventDefault();
+        window.jsPDF = window.jspdf.jsPDF;
 
-            const resultsContainer = document.getElementById('results-container');
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.classList.add('hidden');
-
-            // --- Recoger valores ---
-            const numHuecos = parseInt(document.getElementById('numHuecos').value);
-            const largoHueco = parseFloat(document.getElementById('largoHueco').value);
-            const anchoHueco = parseFloat(document.getElementById('anchoHueco').value);
-            const alturaHuecoCm = parseFloat(document.getElementById('alturaHueco').value);
-            const largoCajon = parseFloat(document.getElementById('largo').value);
-            const anchoCajon = parseFloat(document.getElementById('ancho').value);
-            const alturaCajon = parseFloat(document.getElementById('altura').value);
-            const proporcionPartes = parseInt(document.getElementById('proporcion').value);
-            const precioSaco = parseFloat(document.getElementById('precioSaco').value);
-            const precioCarretilla = parseFloat(document.getElementById('precioCarretilla').value);
-            const tiempoCarretilla = parseFloat(document.getElementById('tiempoCarretilla').value);
-            const tiempoMezcla = parseFloat(document.getElementById('tiempoMezcla').value);
-            const tiempoAlisado = parseFloat(document.getElementById('tiempoAlisado').value);
-
-            // --- Validar entradas ---
-            const inputs = [numHuecos, largoHueco, anchoHueco, alturaHuecoCm, largoCajon, anchoCajon, alturaCajon];
-            if (inputs.some(isNaN) || inputs.some(v => v <= 0)) {
-                errorDiv.textContent = 'Por favor, introduce valores numéricos positivos en todos los campos.';
-                errorDiv.classList.remove('hidden');
-                resultsContainer.classList.add('hidden');
-                return;
-            }
-
-            // --- Constantes ---
-            const VOLUMEN_SACO_CEMENTO_L = 14;
-            const VOLUMEN_CARRETILLA_ARENA_L = 40;
-            const AGUA_POR_SACO_CEMENTO_L = 7;
-
-            // --- Cálculos ---
-            const alturaHuecoM = alturaHuecoCm / 100;
-            const volumenTotalRellenoM3 = numHuecos * largoHueco * anchoHueco * alturaHuecoM;
-            const volumenPorCajonM3 = largoCajon * anchoCajon * alturaCajon;
-            const volumenPorCajonLitros = volumenPorCajonM3 * 1000;
-            const volumenTotalRellenoLitros = volumenTotalRellenoM3 * 1000;
+        document.addEventListener('DOMContentLoaded', () => {
             
-            const volumenCementoTotalLitros = volumenTotalRellenoLitros / proporcionPartes;
-            const volumenArenaTotalLitros = volumenTotalRellenoLitros - volumenCementoTotalLitros;
+            const form = document.getElementById('main-calculator');
+            const getWeatherBtn = document.getElementById('getWeatherBtn');
+            const weatherAddressInput = document.getElementById('weatherAddress');
+            const weatherDateInput = document.getElementById('weatherDate');
+            const weatherResultDiv = document.getElementById('weather-result');
+            const tipoMezclaSelect = document.getElementById('tipoMezcla');
+            const proporcionSelect = document.getElementById('proporcion');
+            const proporcionLabel = document.getElementById('proporcionLabel');
+            const precioGravaInput = document.getElementById('precioGrava');
 
-            const sacosCementoTotales = Math.ceil(volumenCementoTotalLitros / VOLUMEN_SACO_CEMENTO_L);
-            const carretillasArenaTotales = Math.ceil(volumenArenaTotalLitros / VOLUMEN_CARRETILLA_ARENA_L);
-            const litrosAguaTotales = sacosCementoTotales * AGUA_POR_SACO_CEMENTO_L;
+
+            const proporciones = {
+                mortero: {
+                    label: 'Proporción (Cemento:Arena)',
+                    options: { '1:3': '1:3', '1:4': '1:4', '1:5': '1:5' }
+                },
+                hormigon: {
+                    label: 'Proporción (Cemento:Arena:Grava)',
+                    options: { '1:2:3': '1:2:3', '1:2:4': '1:2:4', '1:3:5': '1:3:5'}
+                }
+            };
+
+            function updateProportions() {
+                const tipoMezcla = tipoMezclaSelect.value;
+                const config = proporciones[tipoMezcla];
+
+                proporcionLabel.textContent = config.label;
+                proporcionSelect.innerHTML = '';
+                for (const value in config.options) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = config.options[value];
+                    proporcionSelect.appendChild(option);
+                }
+                precioGravaInput.classList.toggle('hidden', tipoMezcla === 'mortero');
+            }
             
-            const totalCajones = Math.ceil(volumenTotalRellenoM3 / volumenPorCajonM3);
-            const volumenCementoPorCajonLitros = volumenPorCajonLitros / proporcionPartes;
-            const sacosCementoPorCajon = volumenCementoPorCajonLitros / VOLUMEN_SACO_CEMENTO_L;
-            const aguaPorCajonLitros = sacosCementoPorCajon * AGUA_POR_SACO_CEMENTO_L;
+            tipoMezclaSelect.addEventListener('change', updateProportions);
 
-            // --- Coste ---
-            const costeContainer = document.getElementById('coste-container');
-            if (!isNaN(precioSaco) && !isNaN(precioCarretilla) && precioSaco > 0 && precioCarretilla > 0) {
-                const costeTotal = (sacosCementoTotales * precioSaco) + (carretillasArenaTotales * precioCarretilla);
-                document.getElementById('costeTotal').textContent = `${costeTotal.toFixed(2)} €`;
-                costeContainer.classList.remove('hidden');
-            } else {
-                costeContainer.classList.add('hidden');
-            }
+            const today = new Date().toISOString().split('T')[0];
+            weatherDateInput.value = today;
 
-            // --- Tiempo ---
-            const tiempoContainer = document.getElementById('tiempo-container');
-            if (!isNaN(tiempoCarretilla) && !isNaN(tiempoMezcla) && !isNaN(tiempoAlisado) && tiempoCarretilla > 0 && tiempoMezcla > 0 && tiempoAlisado > 0) {
-                const tiempoTotalCarretillas = carretillasArenaTotales * tiempoCarretilla;
-                const tiempoTotalMezcla = totalCajones * tiempoMezcla;
-                const superficieTotal = numHuecos * largoHueco * anchoHueco;
-                const tiempoTotalAlisado = superficieTotal * tiempoAlisado;
+            getWeatherBtn.addEventListener('click', async () => {
+                const address = weatherAddressInput.value;
+                const date = weatherDateInput.value;
+                if (!address || !date) {
+                    weatherResultDiv.textContent = 'Por favor, introduce dirección y fecha.';
+                    weatherResultDiv.classList.remove('hidden');
+                    return;
+                }
                 
-                const tiempoTotalMinutos = tiempoTotalCarretillas + tiempoTotalMezcla + tiempoTotalAlisado;
+                weatherResultDiv.textContent = 'Consultando...';
+                weatherResultDiv.classList.remove('hidden');
+
+                try {
+                    const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+                    if (!geoResponse.ok) throw new Error('Error de geocodificación');
+                    const geoData = await geoResponse.json();
+                    if (geoData.length === 0) throw new Error('No se pudo encontrar la dirección.');
+                    const { lat, lon } = geoData[0];
+
+                    const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode&start_date=${date}&end_date=${date}&timezone=auto`);
+                    if (!weatherResponse.ok) throw new Error('Error al obtener el tiempo');
+                    const weatherData = await weatherResponse.json();
+                    if (!weatherData.daily || !weatherData.daily.weathercode || weatherData.daily.weathercode.length === 0) throw new Error('No hay datos del tiempo para esa fecha.');
+
+                    const code = weatherData.daily.weathercode[0];
+                    let forecast = `Pronóstico para ${date}: `;
+                    if (code <= 1) forecast += "Soleado. ¡Ideal para trabajar!";
+                    else if (code <= 3) forecast += "Parcialmente nublado.";
+                    else if (code > 40 && code < 70) forecast += "Atención: Posibilidad de lluvia.";
+                    else if (code >= 70) forecast += "Atención: Posibilidad de nieve.";
+                    else forecast += "Condiciones mixtas.";
+                    
+                    weatherResultDiv.textContent = forecast;
+
+                } catch (error) {
+                    weatherResultDiv.textContent = `Error: ${error.message}`;
+                    console.error(error);
+                }
+            });
+            
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const resultsContainer = document.getElementById('results-container');
+                const errorDiv = document.getElementById('error-message');
+                const reportContent = document.getElementById('report-content');
+                errorDiv.classList.add('hidden');
+                reportContent.innerHTML = '';
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
                 
-                const horas = Math.floor(tiempoTotalMinutos / 60);
-                const minutos = Math.round(tiempoTotalMinutos % 60);
+                const values = {
+                    numHuecos: parseInt(data.numHuecos),
+                    largoHueco: parseFloat(data.largoHueco),
+                    anchoHueco: parseFloat(data.anchoHueco),
+                    alturaHuecoCm: parseFloat(data.alturaHueco),
+                    largoCajon: parseFloat(data.largo),
+                    anchoCajon: parseFloat(data.ancho),
+                    alturaCajon: parseFloat(data.altura),
+                    desperdicio: parseFloat(data.desperdicio) || 0,
+                    precioSaco: parseFloat(data.precioSaco),
+                    precioCarretilla: parseFloat(data.precioCarretilla),
+                    precioGrava: parseFloat(data.precioGrava),
+                    tiempoCarretilla: parseFloat(data.tiempoCarretilla),
+                    tiempoMezcla: parseFloat(data.tiempoMezcla),
+                    tiempoAlisado: parseFloat(data.tiempoAlisado)
+                };
+
+                const requiredInputs = [values.numHuecos, values.largoHueco, values.anchoHueco, values.alturaHuecoCm, values.largoCajon, values.anchoCajon, values.alturaCajon];
+                if (requiredInputs.some(isNaN) || requiredInputs.some(v => v <= 0)) {
+                    errorDiv.textContent = 'Por favor, introduce valores numéricos positivos en los campos principales.';
+                    errorDiv.classList.remove('hidden');
+                    resultsContainer.classList.add('hidden');
+                    return;
+                }
+
+                const VOLUMEN_SACO_CEMENTO_L = 14, VOLUMEN_CARRETILLA_ARENA_L = 40, VOLUMEN_CARRETILLA_GRAVA_L = 40, AGUA_POR_SACO_CEMENTO_L = 7;
+                const partes = data.proporcion.split(':').map(Number);
+                const totalPartes = partes.reduce((a, b) => a + b, 0);
+                const alturaHuecoM = values.alturaHuecoCm / 100;
+                let volumenTotalRellenoM3 = values.numHuecos * values.largoHueco * values.anchoHueco * alturaHuecoM;
+                volumenTotalRellenoM3 *= (1 + values.desperdicio / 100);
                 
-                document.getElementById('tiempoTotal').textContent = `${horas}h ${minutos}m`;
-                tiempoContainer.classList.remove('hidden');
-            } else {
-                tiempoContainer.classList.add('hidden');
-            }
+                const volumenPorCajonM3 = values.largoCajon * values.anchoCajon * values.alturaCajon;
+                const totalCajonesDecimal = volumenPorCajonM3 > 0 ? volumenTotalRellenoM3 / volumenPorCajonM3 : 0;
+                const totalCajones = Math.ceil(totalCajonesDecimal);
+                const cajonesLlenos = Math.floor(totalCajonesDecimal);
+                const fraccionUltimoCajon = totalCajonesDecimal - cajonesLlenos;
+                
+                const volumenTotalRellenoLitros = volumenTotalRellenoM3 * 1000;
+                const volumenCementoTotalLitros = volumenTotalRellenoLitros / totalPartes;
+                const volumenArenaTotalLitros = volumenCementoTotalLitros * partes[1];
+                const sacosCementoTotales = Math.ceil(volumenCementoTotalLitros / VOLUMEN_SACO_CEMENTO_L);
+                const carretillasArenaTotales = Math.ceil(volumenArenaTotalLitros / VOLUMEN_CARRETILLA_ARENA_L);
+                const litrosAguaTotales = sacosCementoTotales * AGUA_POR_SACO_CEMENTO_L;
+                
+                let carretillasGravaTotales = 0;
+                if (data.tipoMezcla === 'hormigon') {
+                    const volumenGravaTotalLitros = volumenCementoTotalLitros * partes[2];
+                    carretillasGravaTotales = Math.ceil(volumenGravaTotalLitros / VOLUMEN_CARRETILLA_GRAVA_L);
+                }
 
-            // --- Actualizar UI Visual ---
-            const cementoBar = document.getElementById('cemento-bar');
-            const arenaBar = document.getElementById('arena-bar');
-            const arenaPartes = proporcionPartes - 1;
-            cementoBar.style.width = `${(1 / proporcionPartes) * 100}%`;
-            arenaBar.style.width = `${(arenaPartes / proporcionPartes) * 100}%`;
-            arenaBar.textContent = arenaPartes;
+                let resultsHTML = `
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Resumen General</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                        <div><p class="text-sm font-medium text-red-300">Volumen Total (+${values.desperdicio}%)</p><p class="text-3xl font-bold text-red-400">${volumenTotalRellenoM3.toFixed(3)} m³</p></div>
+                        <div><p class="text-sm font-medium text-red-300">Nº de Cajones</p><p class="text-3xl font-bold text-red-400">${totalCajones}</p></div>
+                    </div>
+                </div>`;
+                
+                if (fraccionUltimoCajon > 0.01 && cajonesLlenos > 0) {
+                    const volumenUltimoCajonM3 = fraccionUltimoCajon * volumenPorCajonM3;
+                    const volumenUltimoCajonLitros = volumenUltimoCajonM3 * 1000;
+                    const cementoUltimoCajonL = volumenUltimoCajonLitros / totalPartes;
+                    const arenaUltimoCajonL = cementoUltimoCajonL * partes[1];
+                    const gravaUltimoCajonL = data.tipoMezcla === 'hormigon' ? cementoUltimoCajonL * partes[2] : 0;
+                    
+                    resultsHTML += `
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Optimización Última Mezcla</h3>
+                        <p class="text-center text-gray-300 text-sm mb-2">Necesitarás ${cajonesLlenos} cajones llenos y un último cajón al <strong>${(fraccionUltimoCajon * 100).toFixed(0)}%</strong> con:</p>
+                        <div class="grid grid-cols-1 ${data.tipoMezcla === 'hormigon' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-2 text-center text-sm">
+                            <div><p class="font-bold text-red-300">${(cementoUltimoCajonL).toFixed(1)} L</p><p>Cemento</p></div>
+                            <div><p class="font-bold text-red-300">${(arenaUltimoCajonL).toFixed(1)} L</p><p>Arena</p></div>
+                            ${data.tipoMezcla === 'hormigon' ? `<div><p class="font-bold text-red-300">${(gravaUltimoCajonL).toFixed(1)} L</p><p>Grava</p></div>` : ''}
+                        </div>
+                    </div>`;
+                }
 
-            // --- Mostrar Resultados ---
-            document.getElementById('volumenTotalCubrir').textContent = `${volumenTotalRellenoM3.toFixed(3)} m³`;
-            document.getElementById('totalCajones').textContent = totalCajones;
-            document.getElementById('litrosPorCajon').textContent = `${volumenPorCajonLitros.toFixed(1)} L`;
-            document.getElementById('aguaPorCajon').textContent = `${aguaPorCajonLitros.toFixed(1)} L`;
-            document.getElementById('sacosCemento').textContent = sacosCementoTotales;
-            document.getElementById('carretillasArena').textContent = carretillasArenaTotales;
-            document.getElementById('litrosAgua').textContent = litrosAguaTotales.toFixed(1);
+                const volumenPorCajonLitros = volumenPorCajonM3 * 1000;
+                const cementoPorCajonL = volumenPorCajonLitros / totalPartes;
+                const sacosCementoPorCajon = cementoPorCajonL / VOLUMEN_SACO_CEMENTO_L;
+                const aguaPorCajonLitros = sacosCementoPorCajon * AGUA_POR_SACO_CEMENTO_L;
+                resultsHTML += `
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Detalles por Cajón Lleno</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                        <div><p class="text-sm font-medium text-red-300">Volumen de Mezcla</p><p class="text-3xl font-bold text-red-400">${volumenPorCajonLitros.toFixed(1)} L</p></div>
+                        <div><p class="text-sm font-medium text-red-300">Agua Necesaria</p><p class="text-3xl font-bold text-red-400">${aguaPorCajonLitros.toFixed(1)} L</p></div>
+                    </div>
+                </div>`;
 
-            resultsContainer.classList.remove('hidden');
-            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                const arenaPartes = partes[1];
+                const gravaPartes = data.tipoMezcla === 'hormigon' ? partes[2] : 0;
+                const cementoPercentage = (1 / totalPartes) * 100;
+                const arenaPercentage = (arenaPartes / totalPartes) * 100;
+                const gravaPercentage = (gravaPartes / totalPartes) * 100;
+                resultsHTML += `
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Proporción de la Mezcla</h3>
+                    <div class="flex w-full h-8 rounded-lg overflow-hidden">
+                        <div style="width: ${cementoPercentage}%" class="bg-red-800 flex items-center justify-center text-sm font-bold text-white" title="Cemento">1</div>
+                        <div style="width: ${arenaPercentage}%" class="bg-red-600 flex items-center justify-center text-sm font-bold text-white" title="Arena">${arenaPartes}</div>
+                        ${data.tipoMezcla === 'hormigon' ? `<div style="width: ${gravaPercentage}%" class="bg-red-400 flex items-center justify-center text-sm font-bold text-gray-800" title="Grava">${gravaPartes}</div>` : ''}
+                    </div>
+                </div>`;
+
+                let materialesHTML = `<div class="bg-gray-700 p-6 rounded-lg"><h3 class="font-semibold text-lg text-center text-gray-100 mb-4">Materiales Totales para el Trabajo</h3>`;
+                if(data.tipoMezcla === 'hormigon'){
+                    materialesHTML += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">`;
+                } else {
+                    materialesHTML += `<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">`;
+                }
+                materialesHTML += `
+                    <div><span class="text-4xl font-bold text-red-400">${sacosCementoTotales}</span><p class="text-md text-red-300">Sacos Cemento</p></div>
+                    <div><span class="text-4xl font-bold text-red-400">${carretillasArenaTotales}</span><p class="text-md text-red-300">Carretillas Arena</p></div>`;
+                if (data.tipoMezcla === 'hormigon') {
+                    materialesHTML += `<div><span class="text-4xl font-bold text-red-400">${carretillasGravaTotales}</span><p class="text-md text-red-300">Carretillas Grava</p></div>`;
+                }
+                materialesHTML += `
+                    <div><span class="text-4xl font-bold text-red-400">${litrosAguaTotales.toFixed(1)}</span><p class="text-md text-red-300">Litros de Agua</p></div>
+                </div></div>`;
+                resultsHTML += materialesHTML;
+                
+                let costeTotal = (sacosCementoTotales * (values.precioSaco || 0)) + (carretillasArenaTotales * (values.precioCarretilla || 0));
+                if (data.tipoMezcla === 'hormigon') {
+                    costeTotal += carretillasGravaTotales * (values.precioGrava || 0);
+                }
+                if (costeTotal > 0) {
+                    resultsHTML += `
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg text-center text-gray-200 mb-2">Coste Total Estimado</h3>
+                        <p class="text-4xl font-bold text-red-400 text-center">${costeTotal.toFixed(2)} €</p>
+                    </div>`;
+                }
+
+                let tiempoTotalMinutos = (carretillasArenaTotales * (values.tiempoCarretilla || 0)) + (totalCajones * (values.tiempoMezcla || 0));
+                if(data.tipoMezcla === 'hormigon'){
+                     tiempoTotalMinutos += carretillasGravaTotales * (values.tiempoCarretilla || 0);
+                }
+                const areaTotalM2 = values.numHuecos * values.largoHueco * values.anchoHueco;
+                tiempoTotalMinutos += areaTotalM2 * (values.tiempoAlisado || 0);
+                if (tiempoTotalMinutos > 0) {
+                    const horas = Math.floor(tiempoTotalMinutos / 60);
+                    const minutos = Math.round(tiempoTotalMinutos % 60);
+                    resultsHTML += `
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-lg text-center text-gray-200 mb-2">Tiempo Total Estimado</h3>
+                        <p class="text-4xl font-bold text-red-400 text-center">${horas}h ${minutos}min</p>
+                    </div>`;
+                }
+                
+                resultsHTML += `
+                <div class="bg-gray-700 p-4 rounded-lg text-gray-300">
+                    <h3 class="font-semibold text-lg text-center text-gray-200 mb-3">Planificación y Notas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold mb-2 text-red-300">Checklist de Tareas</h4>
+                            <ul class="space-y-1 text-sm list-inside">
+                                <li><input type="checkbox" class="form-checkbox bg-gray-600 border-gray-500 rounded mr-2">Comprar materiales</li>
+                                <li><input type="checkbox" class="form-checkbox bg-gray-600 border-gray-500 rounded mr-2">Preparar zona de trabajo</li>
+                                <li><input type="checkbox" class="form-checkbox bg-gray-600 border-gray-500 rounded mr-2">Realizar mezcla</li>
+                                <li><input type="checkbox" class="form-checkbox bg-gray-600 border-gray-500 rounded mr-2">Verter y alisar</li>
+                                <li><input type="checkbox" class="form-checkbox bg-gray-600 border-gray-500 rounded mr-2">Limpiar herramientas</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-2 text-red-300">Notas del Proyecto</h4>
+                            <textarea id="projectNotes" class="w-full p-2 bg-gray-600 border border-gray-500 text-white rounded-lg text-sm" rows="4" placeholder="Añade aquí tus notas..."></textarea>
+                        </div>
+                    </div>
+                </div>`;
+
+                reportContent.innerHTML = resultsHTML;
+                resultsContainer.classList.remove('hidden');
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            document.getElementById('generate-pdf').addEventListener('click', () => {
+                const reportContent = document.getElementById('report-content');
+                const resultsContainer = document.getElementById('results-container');
+                const errorDiv = document.getElementById('error-message');
+
+                if (!reportContent.innerHTML.trim()) {
+                    errorDiv.textContent = 'Primero debes calcular los resultados.';
+                    errorDiv.classList.remove('hidden');
+                    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => errorDiv.classList.add('hidden'), 3000);
+                    return;
+                }
+
+                const doc = new jsPDF();
+                
+                const contentClone = reportContent.cloneNode(true);
+                
+                const originalNotes = reportContent.querySelector('#projectNotes');
+                const clonedNotes = contentClone.querySelector('#projectNotes');
+                if (originalNotes && clonedNotes) {
+                    const notesDiv = document.createElement('div');
+                    notesDiv.textContent = originalNotes.value;
+                    notesDiv.className = 'w-full p-2 bg-gray-600 border border-gray-500 text-white rounded-lg text-sm';
+                    notesDiv.style.minHeight = originalNotes.offsetHeight + 'px';
+                    notesDiv.style.whiteSpace = 'pre-wrap';
+                    notesDiv.style.wordBreak = 'break-word';
+                    clonedNotes.parentNode.replaceChild(notesDiv, clonedNotes);
+                }
+                
+                const originalCheckboxes = reportContent.querySelectorAll('input[type=checkbox]');
+                const clonedCheckboxes = contentClone.querySelectorAll('input[type=checkbox]');
+                originalCheckboxes.forEach((cb, index) => {
+                    if (cb.checked) {
+                        clonedCheckboxes[index].setAttribute('checked', 'checked');
+                    }
+                });
+
+                contentClone.style.position = 'absolute';
+                contentClone.style.left = '-9999px';
+                contentClone.style.top = '0px';
+                document.body.appendChild(contentClone);
+
+                html2canvas(contentClone, {
+                    scale: 2,
+                    backgroundColor: '#1f2937',
+                    useCORS: true
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgProps = doc.getImageProperties(imgData);
+                    const pdfWidth = doc.internal.pageSize.getWidth();
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    doc.save('informe_proyecto.pdf');
+                    
+                    document.body.removeChild(contentClone);
+
+                }).catch(err => {
+                    console.error("Error al generar el PDF:", err);
+                    if (document.body.contains(contentClone)) {
+                        document.body.removeChild(contentClone);
+                    }
+                });
+            });
+
+            updateProportions();
         });
     </script>
-
 </body>
 </html>
 
